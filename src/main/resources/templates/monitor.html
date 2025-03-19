@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Monitoring</title>
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            fetchWorkingDay();
+        });
+
+        function fetchAllJobDefinitions() {
+            const selectedDate = document.getElementById('datePicker').value;
+            fetch(`[[${domainUrl}]]/api/jobs/definitions/${selectedDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.querySelector('#jobDefinitionsTable tbody');
+                    tbody.innerHTML = '';
+                    data.forEach(definition => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                        <td>${definition.jobID}</td>
+                        <td>${definition.jobName}</td>
+                        <td>${definition.description}</td>
+                        <td class="${getStatusClass(definition.status)}">${definition.status}</td>
+                        <td>${definition.jobType}</td>
+                        <td>${definition.times}</td>
+                        <td>${definition.periodicIntervalMinutes}</td>
+                        <td>${definition.startHour} - ${definition.endHour}</td>
+                        <td>${definition.domain}</td>
+                        <td>${definition.maxRetries}</td>
+                        <td>${definition.delayInMinutes}</td>
+                        <td>${definition.dependentJobIDs}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error fetching job definitions:', error));
+        }
+
+        function fetchWorkingDay() {
+            fetch(`[[${domainUrl}]]/general/getWorkingDate`)
+                .then(response => response.text())
+                .then(data => {
+                    const datePicker = document.getElementById("datePicker");
+                    datePicker.value = data;
+                    datePicker.max = data;
+                })
+                .catch(error => console.error('Error fetching working date:', error));
+        }
+
+        function fetchExecutionLogs() {
+            const jobId = document.getElementById('logsJobId').value;
+            const selectedDate = document.getElementById('datePicker').value;
+            fetch(`[[${domainUrl}]]/api/jobs/execution-logs/${jobId}/${selectedDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.querySelector('#executionLogsTable tbody');
+                    tbody.innerHTML = '';
+                    data.forEach(log => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                    <td>${log.jobID}</td>
+                    <td>${log.startTime}</td>
+                    <td>${log.endTime}</td>
+                    <td class="${log.status == "Waiting" ? "status-waiting" : (log.status == "Failed" ? "status-failed" : (log.status == "Completed" ? "status-completed" : ""))}">${log.status}</td>
+                    <td>${log.message}</td>
+                    <td>${log.executionDuration}</td>
+                `;
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error fetching execution logs:', error));
+        }
+
+        function triggerJob() {
+            const jobId = document.getElementById('jobId').value;
+            const selectedDate = document.getElementById('datePicker').value;
+
+            // Show custom authentication popup
+            const authPopup = document.getElementById('authPopup');
+            const popupOverlay = document.getElementById('popupOverlay');
+            authPopup.style.display = 'block';
+            popupOverlay.style.display = 'block';
+
+            const usernameInput = document.getElementById('popupUsername');
+            const passwordInput = document.getElementById('popupPassword');
+            const popupSubmit = document.getElementById('popupSubmit');
+
+            popupSubmit.onclick = function () {
+                const username = usernameInput.value;
+                const password = passwordInput.value;
+
+                // Validate inputs
+                if (!username || !password) {
+                    alert('Username and password are required.');
+                    return;
+                }
+
+                // Hide popup
+                authPopup.style.display = 'none';
+                popupOverlay.style.display = 'none';
+
+                // Trigger the job with username and password
+                fetch(`[[${domainUrl}]]/api/jobs/trigger/${jobId}/${selectedDate}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Invalid credentials or other error.');
+                        }
+                        return response.text();
+                    })
+                    .then(message => alert(message))
+                    .catch(error => alert('Error triggering job: ' + error.message));
+            };
+        }
+
+        function getStatusClass(status) {
+            if (status === "Waiting") return "status-waiting";
+            if (status === "Failed") return "status-failed";
+            if (status === "Completed") return "status-completed";
+            return "";
+        }
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        input,
+        button {
+            margin: 5px 0;
+            padding: 8px;
+            font-size: 16px;
+        }
+
+        .styled-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            font-size: 18px;
+            text-align: left;
+        }
+
+        .styled-table th,
+        .styled-table td {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+        }
+
+        .styled-table thead tr {
+            background-color: #009879;
+            color: #ffffff;
+            text-align: left;
+        }
+
+        .status-completed {
+            background-color: green;
+            color: white;
+        }
+
+        .status-waiting {
+            background-color: yellow;
+            color: black;
+        }
+
+        .status-failed {
+            background-color: red;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="authPopup"
+        style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 1000;">
+        <label for="popupUsername">Enter your username:</label>
+        <input type="text" id="popupUsername" style="display: block; margin-top: 10px; padding: 5px;">
+
+        <label for="popupPassword" style="margin-top: 10px;">Enter your password:</label>
+        <input type="password" id="popupPassword" style="display: block; margin-top: 10px; padding: 5px;">
+
+        <button id="popupSubmit" style="margin-top: 10px;">Submit</button>
+    </div>
+    <div id="popupOverlay"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 999;">
+    </div>
+    <h1>Select Date: <input type="date" id="datePicker"></h1>
+    <h1>Manual Job Trigger</h1>
+    <input type="text" id="jobId" placeholder="Job ID">
+    <button onclick="triggerJob()">Trigger Job</button>
+
+    <h1>Job Definitions</h1>
+    <button onclick="fetchAllJobDefinitions()">Fetch All Job Definitions</button>
+    <table id="jobDefinitionsTable" class="styled-table">
+        <thead>
+            <tr>
+                <th>Job ID</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Type</th>
+                <th>Times</th>
+                <th>Period</th>
+                <th>PeriodInterval</th>
+                <th>Domain</th>
+                <th>MaxRetries</th>
+                <th>DelayInMinutes</th>
+                <th>DependentJobIDs</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <h1>Execution Logs by Job ID</h1>
+    <input type="text" id="logsJobId" placeholder="Job ID">
+    <button onclick="fetchExecutionLogs()">Fetch Logs</button>
+    <table id="executionLogsTable" class="styled-table">
+        <thead>
+            <tr>
+                <th>Job ID</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Status</th>
+                <th>Message</th>
+                <th>Execution Duration</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</body>
+
+</html>

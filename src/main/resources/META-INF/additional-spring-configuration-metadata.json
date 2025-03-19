@@ -1,0 +1,42 @@
+{"properties": [
+  {
+    "name": "spring.db-gtp.datasource.driver-class-name",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.db-gtp.datasource.driver-class-name'"
+  },
+  {
+    "name": "spring.db-parameters.datasource.driver-class-name",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.db-parameters.datasource.driver-class-name'"
+  },
+  {
+    "name": "spring.db-wm.datasource.driver-class-name",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.db-wm.datasource.driver-class-name'"
+  },
+  {
+    "name": "domainUrl",
+    "type": "java.lang.String",
+    "description": "A description for 'domainUrl'"
+  },
+  {
+    "name": "azure.keyvault.uri",
+    "type": "java.lang.String",
+    "description": "A description for 'azure.keyvault.uri'"
+  },
+  {
+    "name": "azure.keyvault.tenant-id",
+    "type": "java.lang.String",
+    "description": "A description for 'azure.keyvault.tenant-id'"
+  },
+  {
+    "name": "azure.keyvault.client-id",
+    "type": "java.lang.String",
+    "description": "A description for 'azure.keyvault.client-id'"
+  },
+  {
+    "name": "azure.keyvault.client-secret",
+    "type": "java.lang.String",
+    "description": "A description for 'azure.keyvault.client-secret'"
+  }
+]}
