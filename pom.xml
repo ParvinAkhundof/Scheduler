@@ -11,7 +11,7 @@
     <groupId>com.akbank</groupId>
     <artifactId>wm-general-services</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>WM General Services</name>
+    <name>Scheduler Services</name>
     <description>Wealth management team developments for General purposes of services</description>
     <properties>
         <java.version>17</java.version>
